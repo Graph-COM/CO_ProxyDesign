@@ -3,6 +3,8 @@ The official implementation of the paper 'Unsupervised Learning for Combinatoria
 
 Haoyu Wang, Nan Wu, Hang Yang, Cong Hao, and Pan Li.
 
+![image](https://github.com/peterwang66/Unsupervised-Learning-for-Combinatorial-Optimization-with-Principled-Proxy-Design/blob/main/img/architecture.jpg)
+
 # Introduction of the Framework - a Simplified Tutorial
 Our framework is a general unsupervised framework that could be used in the following problems:
 
