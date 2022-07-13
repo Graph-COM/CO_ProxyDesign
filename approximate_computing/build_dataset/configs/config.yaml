@@ -1,0 +1,6 @@
+data:
+    data_dir: # your path
+    src_dir:  # your path
+    splits:
+        train: 0.85
+        test: 0.15

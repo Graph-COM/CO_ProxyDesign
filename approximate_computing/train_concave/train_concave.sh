@@ -1,0 +1,1 @@
+nohup python -u train_concave.py --save_path 'train_files/12lr0001' --gpu 7 > ./12lr0001.log  2>&1 </dev/null &

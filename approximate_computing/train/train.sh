@@ -1,0 +1,1 @@
+nohup python -u train.py --save_path 'train_files/100lr0001' --gpu 4 > ./100lr0001.log  2>&1 </dev/null &
