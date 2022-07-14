@@ -37,7 +37,7 @@ Go to the following files to train the proxies or the $\mathcal{A}\_{\theta}$.
 
 1. We first need to do the relaxation-and-rounding procedure with our learnt proxies
 
-go to the './evaluation' folder to do evaluation.
+go to the './evaluation' folder to do evaluation. (Fill in the path to model and data first)
 
 2. We need to get the real value for the assignments obtained in step 1.
 
