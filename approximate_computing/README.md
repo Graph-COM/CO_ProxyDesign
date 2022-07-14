@@ -30,4 +30,4 @@ python build_data.py
 
 ## Testing
 
-- Go to the create_test folder to do testing on the testset with the trained models.
+- Go to the test folder to do testing on the testset with the trained models.
