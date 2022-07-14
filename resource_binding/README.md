@@ -6,7 +6,11 @@
 
 2. With the generated data, put it in the folder './case', and then go to the './build_dataset' folder, to pre-process the data and build the dataset that could be sent into PyTorch geometric platform.
 
-3.Go to the following files to train the proxies or the $\mathcal{A}\_{\theta}$.
+Here we provide some examples as the testing data in the folder './example_data'
+
+## Training 
+
+Go to the following files to train the proxies or the $\mathcal{A}\_{\theta}$.
 
 |                                     |      folder     |
 |:-----------------------------------:|:---------------:|
@@ -16,7 +20,13 @@
 |           train $\mathcal{A}_{\theta}$ for CON           |  train_g_linear |
 
 
-4. To use HLS tools to get the actual LUT/DSP usage amount given an assignment, go to the './generate_dataset' folder. Run read_info and Get_perf file to evaluate.
+## Testing
+
+To use HLS tools to get the actual LUT/DSP usage amount given an assignment, 
+
+First, go to the './evaluation' folder to do evaluation.
+
+Second, go to the './generate_dataset' folder. Run read_info and Get_perf file to evaluate.
 
 
 
