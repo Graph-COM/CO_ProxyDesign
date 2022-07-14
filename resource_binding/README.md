@@ -15,8 +15,9 @@ to pre-process the generated data by HLS tools.
 
 3. Go to './build_dataset' folder, build the dataset that could be sent into PyTorch geometric platform:
 ```
-python build_train.py
-python build_test.py
+python build_train.py (training data)
+python build_test.py (testing data for the proxies)
+python build_inference.py (testing data for CO assignments)
 ```
 By this, the data is pre-processed and could be run on PyTorch geometric platform.
 
