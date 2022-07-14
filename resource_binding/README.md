@@ -26,7 +26,7 @@ To use HLS tools to get the actual LUT/DSP usage amount given an assignment,
 
 First, go to the './evaluation' folder to do evaluation.
 
-Second, go to the './generate_dataset' folder. Run read_info and Get_perf file to evaluate.
+Second, go to the './generate_dataset' folder. Run read_info and Get_perf file to evaluate with the real simulation.
 
 
 
