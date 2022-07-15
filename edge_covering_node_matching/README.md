@@ -31,7 +31,7 @@ The testing script is also in this folder.
 |           train $\mathcal{A}_{\theta}$ for AFF           |  train_g_linear |
 |           train $\mathcal{A}_{\theta}$ for CON           | train_g_concave |
 
-
+Fill in the path to the datasets and the models and train them.
 ## Testing
 
 - Go to the create_test folder to do testing on the testset with the trained models.
