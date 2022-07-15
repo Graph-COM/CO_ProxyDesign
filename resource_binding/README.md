@@ -32,6 +32,7 @@ Go to the following files to train the proxies or the $\mathcal{A}\_{\theta}$.
 | train $\mathcal{A}_{\theta}$ with GS-Tr         |     train_g     |
 |           train $\mathcal{A}_{\theta}$ for CON           |  train_g_linear |
 
+Fill in the path to the datasets and the models and train them.
 
 ## Testing
 
