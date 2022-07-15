@@ -27,6 +27,7 @@ python build_data.py
 |           train $\mathcal{A}_{\theta}$ for AFF           |  train_g_linear |
 |           train $\mathcal{A}_{\theta}$ for CON           | train_g_concave |
 
+Fill in the path to the datasets or the models, and train them.
 
 ## Testing
 
