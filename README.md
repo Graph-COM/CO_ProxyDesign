@@ -6,7 +6,7 @@ Haoyu Wang, Nan Wu, Hang Yang, Cong Hao, and Pan Li.
 ![image](https://github.com/Graph-COM/CO_ProxyDesign/blob/main/img/architecture.jpg)
 
 # Introduction of the Framework - a Simplified Tutorial
-Our framework is a general unsupervised framework that could be used in the following problems:
+Our framework is a general unsupervised framework which could extend the probabilistic framework in **Erdos goes neural**[<sup>1</sup>](#refer-anchor-1) from CO problems to PCO problems, as shown in the following figure:
 
 |                                                   | Our framework |
 |:-------------------------------------------------:|:-------------:|
@@ -29,15 +29,15 @@ We need to construct the $f$ or $g$ in entry-wise concave structure with respect
 
 **case 1** $f$ or $g$ could be written out by hand:
 
+In this case, our relaxation-and-rounding procedure would reduce to the same framework as the probabilistic framework introduced in **Erdos goes neural**[<sup>1</sup>](#refer-anchor-1) such as the max-clique and the weighted-cut problem. Once the objectives could be written out by hand, they could be written out in the entry-wise concave (affine) way due to their discrete property (See our Theorem 2).
+
 For example, in our feature-based edge covering problem, we directly write out the constraint 
 
 $$ \textbf{Edge Covering Constraint:} \quad g_r(\bar{X};C) = \sum_{v\in V} \prod_{e:v\in e}(1-\bar{X}\_e) $$
 
-To mention that, in the Erdos probabilistic methods paper, the max-clique and weighted-cut could be classified into this case. Once their objectives and constraints could be written out by hand, they could definitely be written out in the entry-wise concave(affine) way. 
-
 **case 2** $f$ or $g$ is unknown:
 
-Use neural network as the proxy $h$ to learn them, the structure of the networks could be constructed as:
+We need to first use neural networks as the proxy $h$ to learn them, the structure of the networks could be constructed as:
 
 * To learn a discrete function $h:\{0,1\}^{|V|}\times \mathcal{C}\rightarrow \mathbb{R}$, we adopt a GNN as the relaxed proxy of $h$. We first define a latent graph representation in $\mathbb{R}^F$ whose entries are all entry-wise affine mappings of $X$.  
 
@@ -50,6 +50,18 @@ where $W$ is the graph representation, $U_{v}$'s are node representations and $Q
    $$ \textbf{Entry-wise Concave Proxy (CON):}\quad h_r^{\text{c}}(\bar{X};C) = \langle w^c, -\text{Relu}(\phi(\bar{X};C))\rangle + b, $$ 
    
 where $w^a,w^c\in\mathbb{R}^F, b\in\mathbb{R}$ are learnt parameters and $w^c\geq0$ guarantees entry-wise concavity.
+
+In implementation, we could formulate the AFF proxy as follows (not limited to):
+
+1. use GNN to encode the configuration C
+1. Divide the learnt encoding into two parts (coefficient and bias to multiply with X) to construct the latent representation $\phi(\bar{X};C) = W +\sum_{v\in V} U_{v} \bar{X}\_{v} + \sum_{v,u \in V, (v,u) \in E} Q_{v,u} \bar{X}\_{v} \bar{X}\_{u}$
+1. For each node with its latent representation, calculate the logarithmic function of the representation, use message passing to add the adjacent log latent representation together, then do exponential function to get the AFF proxy.
+
+In implementation, we could formulate the CON proxy as follows (not limited to):
+
+1. we could use a constant to minus the AFF latent proxy, then go through the Relu() function, and finally we send the output into another fully connected layer. We constrain the weights of the last fully connected layer to be greater or equal to 0 (torch.clamp() function).
+
+**Note:** We may sum the AFF proxy and the CON proxy for better performance.
 
 ## Step 3: formulate the problem
 Form the problem into the following form:
@@ -68,23 +80,19 @@ Train $\mathcal{A}\_{\theta}$ with the loss function above.
 # Environment Requirements
 The following packages are required to install to implement our code:
 ```shell
-Python 3.7.1
-torch 1.9.0
-torch-cluster           1.5.9
-torch-geometric         1.7.2
-torch-scatter           2.0.8
-torch-sparse            0.6.11
-torch-spline-conv       1.2.1
-pandas                  1.3.0
-numpy                   1.20.3
-torchvision             0.10.0
-tqdm                    4.62.2
+conda create -n proxyco python=3.7.11
+conda activate proxyco
+conda install pytorch==1.9.0 torchvision==0.10.0 torchaudio==0.9.0 cudatoolkit=11.1 -c pytorch -c conda-forge
+pip install torch-scatter==2.0.8 -f https://pytorch-geometric.com/whl/torch-1.9.0+cu111
+pip install torch-sparse==0.6.11 -f https://pytorch-geometric.com/whl/torch-1.9.0+cu111   # this may take a while...
+pip install torch-cluster==1.5.9 -f https://pytorch-geometric.com/whl/torch-1.9.0+cu111
+pip install torch-spline-conv==1.2.1 -f https://pytorch-geometric.com/whl/torch-1.9.0+cu111
+pip install torch_geometric==1.7.2
 
 Optional but recommend:
-numba                   0.55.0 (accelerate the dataset generation)
-matplotlib              3.5.1 (visualization)
-
-
+pip install matplotlib
+pip install pyyaml
+pip install tensorboardx
 ```
 
 # Application I: Feature Based Edge Covering and Node Matching in Graphs
@@ -92,3 +100,7 @@ matplotlib              3.5.1 (visualization)
 # Application II: Resource Allocation in Circuit Design
 
 # Application III: Imprecise Functional Unit Assignment in Approximate Computing
+
+
+<div id="refer-anchor-1"></div>
+[1][Erdos goes neural: an Unsupervised Learning Framework for Combinatorial Optimization on Graphs. Neurips 2020.](https://proceedings.neurips.cc/paper/2020/hash/49f85a9ed090b20c8bed85a5923c669f-Abstract.html) 
