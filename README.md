@@ -6,7 +6,7 @@ Haoyu Wang, Nan Wu, Hang Yang, Cong Hao, and Pan Li.
 ![image](https://github.com/Graph-COM/CO_ProxyDesign/blob/main/img/architecture.jpg)
 
 # Introduction of the Framework - a Simplified Tutorial
-Our framework is a general unsupervised framework which could extend the probabilistic framework in **Erdos goes neural**[<sup>1</sup>](#refer-anchor-1) from CO problems to PCO problems, as shown in the following figure:
+Our framework is a general unsupervised framework which could extend the probabilistic framework in **Erdos goes neural**[<sup>1</sup>](#refer-anchor-1) from LCO problems to PCO problems, as shown in the following figure:
 
 |                                                   | Our framework |
 |:-------------------------------------------------:|:-------------:|
