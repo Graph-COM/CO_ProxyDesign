@@ -77,6 +77,9 @@ $$ \min_{\theta} l_r(\theta;C) \triangleq f_r(\bar{X};C) + \beta g_r(\bar{X};C),
 ## Step 5: train the randomized algorithm with the loss function above
 Train $\mathcal{A}\_{\theta}$ with the loss function above.
 
+## Step 6: Inference
+Then we could use $\mathcal{A}\_{\theta}$ to infer the elarnt assignment of the optimization variables. We could then use our rounding process to obtain the discrete solution.
+
 # Environment Requirements
 The following packages are required to install to implement our code:
 ```shell
