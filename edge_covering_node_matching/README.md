@@ -1,4 +1,5 @@
-# Here are the steps to train the model, test the model and visualize the model output in the edge covering problem.
+# edge_covering_node_matching
+Here are the steps to train the model, test the model and visualize the model output in the edge covering problem.
 
 ## Dataset Information
 The dataset utilizes the images in MNIST dataset.
