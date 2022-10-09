@@ -97,6 +97,11 @@ pip install matplotlib
 pip install pyyaml
 pip install tensorboardx
 ```
+if you install the environment packages above but has the error as follows:
+```
+‘NoneType‘ object has no attribute ‘origin‘
+```
+you could add the cuda.so libs into the folder of these packages that we uploaded to the folder ./environment_utils/cuda_libs to solve the problem.
 
 # Application I: Feature Based Edge Covering and Node Matching in Graphs
 
