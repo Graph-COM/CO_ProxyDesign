@@ -1,1 +1,0 @@
-nohup python -u test_linear.py > ./test_linear.log  2>&1 </dev/null &

@@ -9,11 +9,11 @@ from pathlib import Path
 import yaml
 import re
 import itertools
-class Application_1_Train(InMemoryDataset):
+class Application_1_Test(InMemoryDataset):
     def __init__(self, config:dict):
         self.config = config
         self.data_path = Path(config['data_dir'])
-        super(Application_1_Train, self).__init__(root=self.data_path)
+        super(Application_1_Test, self).__init__(root=self.data_path)
         self.data, self.slices = torch.load(self.processed_paths[0])
 
     @property
@@ -27,16 +27,14 @@ class Application_1_Train(InMemoryDataset):
     def download(self):
         # Download to `self.raw_dir`.
         pass
-    def get_idx_split(self, split_type = 'Random'):
-        data_idx = np.arange(3095)
-        train_idx = data_idx
-        return {'train':torch.tensor(train_idx,dtype = torch.long)}
+    def get_idx_split(self):
+        data_idx = np.arange(310)
+        test_idx = data_idx
+        return {'test':torch.tensor(test_idx,dtype = torch.long)}
     def process(self):
+        # Read data into huge `Data` list.
         data_list = []
-        #all the cases
-        case_index = [1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
-        dsp_list = []
-        lut_list = []
+        case_index = [1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,28,29,30,31,32,33,34,35,36,37,38,39,40]
         for k in range(len(case_index)):
             name='case_'+str(case_index[k])+'/case_'+str(case_index[k])+'_' 
             edge=pd.read_csv('./case/'+name+'edge.csv')
@@ -57,38 +55,34 @@ class Application_1_Train(InMemoryDataset):
             edge_index = torch.from_numpy(both_array).long()
             graph_label_dsp = pd.read_csv('./case/'+name+'target_dsp.csv')
             graph_label_lut = pd.read_csv('./case/'+name+'target_lut.csv')
-            
-
+ 
             num_nodes = torch.max(edge_index)
             nodes_list = np.arange(0,num_nodes+1)
             full_connect_edge = torch.tensor(list(itertools.permutations(nodes_list, 2))).T
             #print(full_connect_edge)
 
-            len_instance_list = len(graph_label_dsp)
-            instance_list = np.arange(len_instance_list)
-            shuffle_list = np.random.shuffle(instance_list)
-            instance_list_train = instance_list[:int(len_instance_list * 0.91)]
-            instance_list_test = instance_list[int(len_instance_list * 0.91):]
-            list_to_save = {'train_list': instance_list_train, 'test_list':instance_list_test}
             save_path = './test_list/'
-            save_file = open(save_path+str(case_index[k])+'.pkl', 'wb')
-            pickle.dump(list_to_save, save_file)
+            save_file = open(save_path+str(case_index[k])+'.pkl', 'rb')
+            list_tuple = pickle.load(save_file)
+            instance_list_test = list_tuple['test_list']
             save_file.close()
-            for i in instance_list_train:
+            
+            for i in instance_list_test:
                 ith_label_dsp = np.array(graph_label_dsp)[i][0].astype(int)
                 ith_label_lut = np.array(graph_label_lut)[i][0].astype(int)
                 predict_dsp = torch.tensor(ith_label_dsp,dtype = torch.float).reshape(-1,1)
                 predict_lut = torch.tensor(ith_label_lut,dtype = torch.float).reshape(-1,1)
-                raw_content = pd.read_csv('./case_'+str(case_index[k])+'/case'+str(case_index[k])+'_'+str(i)+'.csv')
+                raw_content = pd.read_csv('./case/case_'+str(case_index[k])+'/case'+str(case_index[k])+'_'+str(i)+'.csv')
                 node_feature = np.array(raw_content)
                 node_feature = node_feature[...,1:].astype(int)
                 x = torch.tensor(node_feature, dtype = torch.float)
-                data = Data(x = x, edge_index = edge_index, predict_lut = predict_lut, predict_dsp = predict_dsp)
+                data = Data(x = x, edge_index = edge_index, predict_lut = predict_lut, predict_dsp = predict_dsp, case_index = case_index[k], instance_index = i)
                 data_list.append(data)
+     
         data, slices = self.collate(data_list)
         torch.save((data, slices), self.processed_paths[0])
         print(len(data_list))
-        
+
 
 if __name__ == '__main__':
     import os
@@ -96,4 +90,6 @@ if __name__ == '__main__':
     for cfg in configs.iterdir():
         if str(cfg).startswith("configs/config"):
             cfg_dict = yaml.safe_load(cfg.open('r'))
-            dataset = Application_1_Train(cfg_dict['data'])
+            dataset = Application_1_Test(cfg_dict['val'])
+    
+    

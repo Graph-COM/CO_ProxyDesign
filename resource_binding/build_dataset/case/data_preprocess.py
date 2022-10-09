@@ -1,11 +1,8 @@
-# data preprocess, save as csv files
 
 import pandas as pd
 import numpy as np
 
 import pickle
-
-#case_index=[3,4,5,6,7,13,14,15,16,17,18,19,20,21,22,23,24,26,27,29,30]+[i for i in range(31,44)]+[i for i in range(47,60)]
 case_index = [1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 18, 19, 20]
 
 # change precision into binary numbers

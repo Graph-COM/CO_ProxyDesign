@@ -1,0 +1,1 @@
+nohup python -u test_con.py > ./test_con.log  2>&1 </dev/null &

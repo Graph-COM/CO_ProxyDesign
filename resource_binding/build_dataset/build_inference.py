@@ -27,7 +27,6 @@ class Application_1_Inference(InMemoryDataset):
     def download(self):
         # Download to `self.raw_dir`.
         pass
-    # 8172 is all the cases, 9 is the threshold 0, 1, 2, 3, 4, 5 , 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17
     def get_idx_split(self):
         data_idx = np.arange(20) 
         test_idx = data_idx
@@ -35,11 +34,7 @@ class Application_1_Inference(InMemoryDataset):
     def process(self):
         # Read data into huge `Data` list.
         data_list = []
-        #case_index = [1, 2, 3, 4, 11, 12, 13, 14, 15]
         case_index = [1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23]
-
-        #case_index = [12]
-
         for k in range(len(case_index)):
             name='case_'+str(case_index[k])+'/case_'+str(case_index[k])+'_' 
             edge=pd.read_csv('./case/'+name+'edge.csv')

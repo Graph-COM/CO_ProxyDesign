@@ -4,16 +4,12 @@ data:
     splits:
         train: 0.85
         valid: 0.15
-test:
+val:
     data_dir: #
     src_dir:  #
 inference:
     data_dir: #
     src_dir:  #
-    splits:
-        train: 0.7
-        valid: 0.15
-        test: 0.15
 
 
 
