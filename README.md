@@ -106,4 +106,4 @@ pip install tensorboardx
 
 
 <div id="refer-anchor-1"></div>
-[1][Erdos goes neural: an Unsupervised Learning Framework for Combinatorial Optimization on Graphs. Neurips 2020.](https://proceedings.neurips.cc/paper/2020/hash/49f85a9ed090b20c8bed85a5923c669f-Abstract.html) 
+[1][Erdos goes neural: an Unsupervised Learning Framework for Combinatorial Optimization on Graphs. Nikolaos Karalias, Andreas Loukas. Neurips 2020.](https://proceedings.neurips.cc/paper/2020/hash/49f85a9ed090b20c8bed85a5923c669f-Abstract.html) 
