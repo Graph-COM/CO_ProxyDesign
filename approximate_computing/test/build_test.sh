@@ -1,1 +1,0 @@
-nohup python -u build_test.py > ./build_test_time.log  2>&1 </dev/null &

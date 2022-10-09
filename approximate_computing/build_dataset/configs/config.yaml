@@ -1,6 +1,6 @@
 data:
-    data_dir: # your path
-    src_dir:  # your path
+    data_dir: #path
+    src_dir:  #path
     splits:
         train: 0.85
-        test: 0.15
+        val: 0.15

@@ -1,12 +1,11 @@
 # generate application 2 dataset
-import pandas as pd
 import numpy as np
 import torch
 from torch_geometric.data import InMemoryDataset
 from torch_geometric.data import Data
 from pathlib import Path
 import yaml
-import re
+from tqdm import tqdm
 
 def sample_edge_index():
     '''randomly sample the edge index for the circuit'''
@@ -99,7 +98,7 @@ class Application_2_Dataset(InMemoryDataset):
         data_idx = np.arange(100000)
         splits = self.splits
         train_num = int(float(splits['train'])*100000)
-        test_num = int(float(splits['test'])*100000)
+        test_num = int(float(splits['val'])*100000)
         if (split_type==None):
             train_idx = data_idx[:train_num]
             test_idx = data_idx[train_num:]
@@ -109,10 +108,10 @@ class Application_2_Dataset(InMemoryDataset):
             test_idx = data_idx[train_num:]
         else:
             print("something went wrong?")        
-        return {'train':torch.tensor(train_idx,dtype = torch.long), 'test':torch.tensor(test_idx,dtype = torch.long)}
+        return {'train':torch.tensor(train_idx,dtype = torch.long), 'val':torch.tensor(test_idx,dtype = torch.long)}
     def process(self):
         data_list = []
-        for index_structure in range(1,501):
+        for index_structure in tqdm(range(1,501)):
             # randomly sample the graph structure (edge_index)
             edge_index, num_input = sample_edge_index()
             # randomly sample the operation in each node  0:sum, 1:multiply

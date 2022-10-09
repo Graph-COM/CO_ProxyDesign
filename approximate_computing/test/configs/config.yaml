@@ -1,5 +1,0 @@
-data:
-    data_dir: # path to the data
-    src_dir:  # path to the data
-    splits:
-        test: 1

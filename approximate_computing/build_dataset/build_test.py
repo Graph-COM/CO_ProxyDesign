@@ -1,12 +1,6 @@
 # generate application 2 dataset
-import pandas as pd
 import numpy as np
 import torch
-from torch_geometric.data import InMemoryDataset
-from torch_geometric.data import Data
-from pathlib import Path
-import yaml
-import re
 
 from numba import jit
 from numba.typed import List
@@ -178,7 +172,7 @@ def make_an_instance(save_path,index):
 
 def main():
     start_time = time.time()
-    save_path = '/scratch1/wang5272/erdos/application_2/test/testset_time/'
+    save_path = './testset/'
     for index in range(1,500):
         print("generating the "+str(index)+" instance!")
         make_an_instance(save_path,index)

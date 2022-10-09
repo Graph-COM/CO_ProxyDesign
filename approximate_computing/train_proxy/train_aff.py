@@ -1,11 +1,6 @@
-import pandas as pd
-import numpy as np
 import torch
-from torch_geometric.data import InMemoryDataset
-from torch_geometric.data import Data
 from pathlib import Path
 import yaml
-import re
 import os
 from torch_geometric.data import DataLoader
 import argparse
@@ -16,8 +11,9 @@ import sys
 sys.path.append("..")
 from build_dataset.build_data import Application_2_Dataset
 from tensorboardX import SummaryWriter
-from model import PNA_linear
+from model_aff import PNA_aff
 from torch_geometric.utils import degree
+from tqdm import tqdm
 
 def train(model, train_loader,criterion, optimizer,device):
     model.train()
@@ -52,7 +48,7 @@ def test(model, test_loader,device,criterion):
 def main():
     
     parser = argparse.ArgumentParser(description='this is the arg parser for application dataset 1')
-    parser.add_argument('--save_path', dest = 'save_path',default = './train_files/new_train')
+    parser.add_argument('--save_path', dest = 'save_path',default = './train_files/aff/new_train')
     parser.add_argument('--gpu', dest = 'gpu',default = '7')
 
     args = parser.parse_args()
@@ -60,16 +56,16 @@ def main():
         os.mkdir(args.save_path)
 
     # save the model and config for this training
-    old_model_path = r'./model.py'
-    new_model_path = os.path.join(args.save_path,'model.py')
+    old_model_path = r'./model_aff.py'
+    new_model_path = os.path.join(args.save_path,'model_aff.py')
     shutil.copyfile(old_model_path,new_model_path)
 
     old_config_path = r'../build_dataset/configs/config.yaml'
     new_config_path = os.path.join(args.save_path,'config.yaml')
     shutil.copyfile(old_config_path,new_config_path)
 
-    old_train_path = r'./train_linear.py'
-    new_train_path = os.path.join(args.save_path,'train_linear.py')
+    old_train_path = r'./train_aff.py'
+    new_train_path = os.path.join(args.save_path,'train_aff.py')
     shutil.copyfile(old_train_path,new_train_path)
 
 
@@ -79,11 +75,11 @@ def main():
     dataset = Application_2_Dataset(cfg_dict['data'])
     data_splits = dataset.get_idx_split()
     train_dataset = dataset[data_splits['train']]
-    test_dataset = dataset[data_splits['test']]
+    val_dataset = dataset[data_splits['val']]
    
 
     train_loader = DataLoader(train_dataset, batch_size = 2048, shuffle = True)
-    test_loader = DataLoader(test_dataset, batch_size = 2048, shuffle = False)
+    val_loader = DataLoader(val_dataset, batch_size = 2048, shuffle = False)
     device = torch.device("cuda:"+str(args.gpu) if torch.cuda.is_available() else "cpu")
 
     # Compute the maximum in-degree in the training data.
@@ -99,7 +95,7 @@ def main():
         deg += torch.bincount(d, minlength=deg.numel())
     torch.save(deg, args.save_path+'/deg.pt')
    
-    model = PNA_linear()
+    model = PNA_aff(args.gpu,args.save_path)
     optimizer = torch.optim.Adam(model.parameters(), lr = 0.001)
     #criterion = torch.nn.MSELoss() 
     #criterion = torch.nn.L1Loss()
@@ -109,17 +105,17 @@ def main():
     tensor_path = os.path.join(args.save_path,'tensor_log')
 
     writer = SummaryWriter(log_dir = tensor_path)
-    best_loss_test = 10000
+    best_loss_val = 10000
     best_loss_train = 10000
-    for epoch in range(1,501):
+    for epoch in tqdm(range(1,501)):
         train(model,train_loader, criterion, optimizer,device)
         
         train_loss, train_error = test(model, train_loader,device,criterion)
-        test_loss, test_error  = test(model, test_loader,device,criterion)
-        if (test_loss<best_loss_test):
-            best_loss_test = test_loss
-            best_test_path = os.path.join(args.save_path,'best_test_model.pth')
-            torch.save(model.state_dict(), best_test_path)
+        val_loss, val_error  = test(model, val_loader,device,criterion)
+        if (val_loss<best_loss_val):
+            best_loss_val = val_loss
+            best_val_path = os.path.join(args.save_path,'best_val_model.pth')
+            torch.save(model.state_dict(), best_val_path)
         if (train_loss<best_loss_train):
             best_loss_train = train_loss
             best_train_path = os.path.join(args.save_path,'best_train_model.pth')
@@ -128,10 +124,10 @@ def main():
             PATH = os.path.join(args.save_path,'epoch'+str(epoch)+'.pth')
             torch.save(model.state_dict(), PATH)
         writer.add_scalar('scalar/train_loss',train_loss,epoch)
-        writer.add_scalar('scalar/test_loss',test_loss,epoch)
+        writer.add_scalar('scalar/val_loss',val_loss,epoch)
         writer.add_scalar('scalar/train_error',train_error,epoch)
-        writer.add_scalar('scalar/test_error',test_error,epoch)
-        print(f'Epoch: {epoch:03d}, Train Loss: {train_loss:.4f}, Train Error: {train_error:.4f}, Test Loss: {test_loss:.4f}, Test Error: {test_error:.4f}')
+        writer.add_scalar('scalar/val_error',val_error,epoch)
+        print(f'Epoch: {epoch:03d}, Train Loss: {train_loss:.4f}, Train Error: {train_error:.4f}, Val Loss: {val_loss:.4f}, Val Error: {val_error:.4f}')
     writer.close()
 
 

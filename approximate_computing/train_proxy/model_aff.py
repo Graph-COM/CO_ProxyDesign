@@ -1,14 +1,8 @@
 #the model of a graph sage to predict the relative error
-
 import torch
 import torch.nn.functional as F
 from torch.nn import Embedding, Linear, ModuleList, ReLU, Sequential
-from torch.optim.lr_scheduler import ReduceLROnPlateau
-
-from torch_geometric.datasets import ZINC
-from torch_geometric.data import DataLoader
-from torch_geometric.nn import BatchNorm, PNAConv, global_add_pool, global_mean_pool
-from torch_geometric.utils import degree
+from torch_geometric.nn import BatchNorm, PNAConv, global_mean_pool
 from torch_geometric.nn.conv import MessagePassing
 
 class LastLayer(MessagePassing):
@@ -22,11 +16,12 @@ class LastLayer(MessagePassing):
     def message(self, x_j):
         return torch.log(x_j+1e-6)
 
-class PNA_linear(torch.nn.Module):
-    def __init__(self):
+class PNA_aff(torch.nn.Module):
+    def __init__(self, gpu_num, save_path):
         super().__init__()
-        deg_file = torch.load('path to deg').to(torch.device("cuda:3")) # path to deg
-        #self.node_emb = Embedding(11, 75)
+        self.gpu_num = gpu_num
+        self.save_path = save_path
+        deg_file = torch.load(self.save_path+'/deg.pt').to(torch.device("cuda:"+str(self.gpu_num)))
         self.pre_lin = Linear(1, 80)
         aggregators = ['mean', 'min', 'max', 'std']
         scalers = ['identity', 'amplification', 'attenuation']

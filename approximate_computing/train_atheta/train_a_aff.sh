@@ -1,0 +1,1 @@
+nohup python -u train_a_aff.py --save_path './train_files/aff/train_a_aff_51lr0001' --gpu 0 --proxy_path '../train_proxy/train_files/aff/train_aff_100lr0001/best_val_model.pth' > ./train_a_aff_51lr0001.log  2>&1 </dev/null &

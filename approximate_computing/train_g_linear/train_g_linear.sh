@@ -1,1 +1,0 @@
-nohup python -u train_g_linear.py --save_path 'train_files/31lr0001_time' --gpu 1 > ./31lr0001_time.log  2>&1 </dev/null &

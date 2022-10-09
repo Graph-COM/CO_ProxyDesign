@@ -11,7 +11,6 @@ from torch_geometric.nn import BatchNorm, PNAConv, global_add_pool, global_mean_
 from torch_geometric.utils import degree
 from torch_geometric.nn.conv import MessagePassing
 
-device = torch.device("cuda:2")
 class LastLayer(MessagePassing):
     def __init__(self):
         super(LastLayer, self).__init__(aggr='add')  
@@ -23,12 +22,22 @@ class LastLayer(MessagePassing):
     def message(self, x_j):
         return torch.log(x_j+1e-6)
 
-
-class PNA_concave(torch.nn.Module):
+class weightConstraint(object):
     def __init__(self):
+        pass
+    
+    def __call__(self,module):
+        if hasattr(module,'weight'):
+            w=module.weight.data
+            w=w.clamp(0)
+            module.weight.data=w
+
+class PNA_con(torch.nn.Module):
+    def __init__(self, gpu_num, save_path):
         super().__init__()
-        deg_file = torch.load(' path to deg').to(device)# add path to the deg file
-        #self.node_emb = Embedding(11, 75)
+        self.gpu_num = gpu_num
+        self.save_path = save_path
+        deg_file = torch.load(self.save_path+'/deg.pt').to(torch.device("cuda:"+str(self.gpu_num)))
         self.pre_lin = Linear(1, 80)
         aggregators = ['mean', 'min', 'max', 'std']
         scalers = ['identity', 'amplification', 'attenuation']
@@ -47,14 +56,11 @@ class PNA_concave(torch.nn.Module):
         self.mlp_2 = Sequential(Linear(20, 1))
         self.mlp_lin = Sequential(Linear(40, 1))
 
-
     def forward(self, x, edge_index, batch):
         
-        #import pdb; pdb.set_trace()
         operation = torch.clone(x[:,0]).reshape(-1,1)
         assignment = torch.clone(x[:,1]).reshape(-1,1)
         operation = self.pre_lin(operation)
-        #import pdb; pdb.set_trace()
         for conv, batch_norm in zip(self.convs, self.batch_norms):
             operation = F.relu(batch_norm(conv(operation, edge_index)))
         operation_front = operation[:,:40]
@@ -65,45 +71,9 @@ class PNA_concave(torch.nn.Module):
         x_combine = global_mean_pool(x_combine, batch)
 
         x_lin = self.mlp_lin(x_combine)
-        x_combine = self.mlp_1(x_combine)
-        x_combine = 20 - x_combine.relu()
-        x_combine = self.mlp_2(x_combine)
-        x_out = x_combine + x_lin
+        x_concave = self.mlp_1(x_combine)
+        x_concave = 8 - x_concave.relu()
+        x_concave = self.mlp_2(x_concave)
+        x_out = x_concave + x_lin
+        
         return x_out
-
-
-class PNA_concave2(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        deg_file = torch.load(' path to deg').to(device)# add path to the deg file
-        #self.node_emb = Embedding(11, 75)
-        self.pre_lin = Linear(1, 75)
-        aggregators = ['mean', 'min', 'max', 'std']
-        scalers = ['identity', 'amplification', 'attenuation']
-     
-        self.convs = ModuleList()
-        self.batch_norms = ModuleList()
-        for _ in range(4):
-            conv = PNAConv(in_channels=75, out_channels=75,
-                           aggregators=aggregators, scalers=scalers, deg=deg_file,
-                           towers=5, pre_layers=1, post_layers=1,
-                           divide_input=False)
-            self.convs.append(conv)
-            self.batch_norms.append(BatchNorm(75))
-
-        self.mlp = Sequential(Linear(76, 50), ReLU(), Linear(50, 25), ReLU(),
-                              Linear(25, 1))
-
-    def forward(self, x, alpha, edge_index, batch):
-        
-        #import pdb; pdb.set_trace()
-        fixed_feature = torch.clone(x[:,0]).reshape(-1, 1)
-        x = self.pre_lin(fixed_feature)
-        
-        for conv, batch_norm in zip(self.convs, self.batch_norms):
-            x = F.relu(batch_norm(conv(x, edge_index)))
-        to_attach = alpha[batch].float().reshape(-1,1)
-        x = torch.cat([x, to_attach], -1)
-        x = self.mlp(x)
-        x = x.sigmoid()
-        return x, fixed_feature

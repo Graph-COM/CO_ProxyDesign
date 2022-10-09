@@ -1,0 +1,1 @@
+nohup python -u test_aff.py --model_path '../train_atheta/train_files/aff/train_a_aff_51lr0001/' --gpu 7 --proxy_path '../train_proxy/train_files/aff/train_aff_100lr0001/' --testset_path '../build_dataset/testset/' --save_path './test_results/test_aff/' > ./test_aff_100lr0001.log  2>&1 </dev/null &

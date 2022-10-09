@@ -1,0 +1,1 @@
+nohup python -u train_a_con.py --save_path './train_files/con/train_a_con_51lr0001_8' --gpu 6 --proxy_path '../train_proxy/train_files/con/train_con_100lr0001_8/best_val_model.pth' > ./train_a_con_51lr0001_8.log  2>&1 </dev/null &

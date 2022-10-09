@@ -11,7 +11,6 @@ from torch_geometric.nn import BatchNorm, PNAConv, global_add_pool, global_mean_
 from torch_geometric.utils import degree
 from torch_geometric.nn.conv import MessagePassing
 
-device = torch.device("cuda:1")
 class LastLayer(MessagePassing):
     def __init__(self):
         super(LastLayer, self).__init__(aggr='add')  
@@ -23,11 +22,12 @@ class LastLayer(MessagePassing):
     def message(self, x_j):
         return torch.log(x_j+1e-6)
 
-class PNA_linear(torch.nn.Module):
-    def __init__(self):
+class PNA_aff(torch.nn.Module):
+    def __init__(self, gpu_num, save_path):
         super().__init__()
-        deg_file = torch.load(' path to the deg file').to(device) # add path to the deg file
-        #self.node_emb = Embedding(11, 75)
+        self.gpu_num = gpu_num
+        self.save_path = save_path
+        deg_file = torch.load(self.save_path+'/deg.pt').to(torch.device("cuda:"+str(self.gpu_num)))
         self.pre_lin = Linear(1, 80)
         aggregators = ['mean', 'min', 'max', 'std']
         scalers = ['identity', 'amplification', 'attenuation']
@@ -63,11 +63,12 @@ class PNA_linear(torch.nn.Module):
         return self.mlp(x_combine)
 
 
-class PNA_linear2(torch.nn.Module):
-    def __init__(self):
+class PNA_aff2(torch.nn.Module):
+    def __init__(self, gpu_num, save_path):
         super().__init__()
-        deg_file = torch.load(' path to the deg file').to(device) # add path to the deg file
-        #self.node_emb = Embedding(11, 75)
+        self.gpu_num = gpu_num
+        self.save_path = save_path
+        deg_file = torch.load(self.save_path+'/deg.pt').to(torch.device("cuda:"+str(self.gpu_num)))
         self.pre_lin = Linear(2, 75)
         aggregators = ['mean', 'min', 'max', 'std']
         scalers = ['identity', 'amplification', 'attenuation']

@@ -5,7 +5,9 @@ from torch_geometric.data import InMemoryDataset
 from torch_geometric.data import Data
 sys.path.append("..")
 import torch
-from train_g_concave.model import PNA_concave, PNA_concave2
+from train_atheta.model_aff import PNA_aff, PNA_aff2
+import argparse
+from tqdm import tqdm
 
 def cal_node(l, r, op, assign, err_chance, err_margin):
     '''calculate the result in a single node
@@ -56,51 +58,35 @@ def cal_result(initial_input, operation, assignment, edge_index, err_chance, err
     return result_list[:,num_initial + 14].reshape(-1,1)
     #return result_list
     
-def test_alpha_in_instance(threshold, alpha, operation, edge_index, optimizer, predictor):
+def test_alpha_in_instance(threshold, alpha, operation, edge_index, optimizer, predictor, device):
     initial_assignment = torch.randint(0,2,(15,1))
     operation = torch.tensor(operation).reshape(-1,1)
     input_optimizer = torch.cat([operation, initial_assignment], 1).float()
+    input_optimizer = input_optimizer.to(device)
     batch = torch.tensor([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+    batch = batch.to(device)
     alpha = torch.tensor(alpha).reshape(-1,1)
+    alpha = alpha.to(device)
+    edge_index = edge_index.to(device)
     optimizer_output,_ = optimizer(input_optimizer, alpha, edge_index, batch)
-    #import pdb; pdb.set_trace()
-    rounded_node_feature = optimizer_output.detach().numpy()
-
-    soft_feature = torch.cat([operation, optimizer_output.reshape(-1,1)],1)
-    soft_score = predictor(soft_feature, edge_index, batch) + (threshold - sum(optimizer_output)).relu()
-    #for index in range(15):
-    for index in range(15):
-        tmp_feature_0 = torch.clone(torch.tensor(rounded_node_feature).reshape(-1,1))
-        tmp_feature_1 = torch.clone(torch.tensor(rounded_node_feature).reshape(-1,1))
-        tmp_feature_0[index] = 0.0
-        tmp_feature_1[index] = 1.0
-        tmp_predict_input_0 = torch.cat([operation, tmp_feature_0],1)
-        tmp_predict_input_1 = torch.cat([operation, tmp_feature_1],1)
-        predict_0 = predictor(tmp_predict_input_0, edge_index, batch)
-        predict_1 = predictor(tmp_predict_input_1, edge_index, batch) 
-        #to be modified, we need try multiple alphas such that the final result could meet the requirement and ahieves the best performance
-        if threshold == 3:
-            if (predict_0 - alpha * sum(tmp_feature_0)) > (predict_1 - alpha * sum(tmp_feature_1)):
-                rounded_node_feature[index] = 1
-            else:
-                rounded_node_feature[index] = 0
-        elif threshold == 5:
-            
-            if (predict_0 - alpha * sum(tmp_feature_0)) > (predict_1 - alpha * sum(tmp_feature_1)):
-                rounded_node_feature[index] = 1
-            else:
-                rounded_node_feature[index] = 0
-        else:
-            
-            if (predict_0 - alpha * sum(tmp_feature_0)) > (predict_1 - alpha * sum(tmp_feature_1)):
-                rounded_node_feature[index] = 1
-            else:
-                rounded_node_feature[index] = 0
-    #import pdb; pdb.set_trace()
+    optimizer_output = optimizer_output.cpu()
+    optimizer_output_index = np.argsort(optimizer_output.detach().numpy().reshape(-1))
+    rounded_node_feature = np.zeros(15)
+    index = 0
+    while index < threshold:
+        rounded_node_feature[optimizer_output_index[14-index]] = 1.0
+        index = index + 1
     tensor_node_feature = torch.tensor(rounded_node_feature).reshape(-1,1).float()
     predictor_input = torch.cat([operation, tensor_node_feature],1)
+    predictor_input = predictor_input.to(device)
     predictor_output = predictor(predictor_input, edge_index, batch)
-    return predictor_output, rounded_node_feature, soft_score
+    predictor_output = predictor_output.cpu()
+    del batch
+    del alpha
+    del edge_index
+    del input_optimizer
+    del predictor_input
+    return predictor_output, rounded_node_feature
 
 def test_with_initial(num_input, initial_input, operation, min_node_feature, edge_index):
     assignment_noerr = np.zeros(15)
@@ -123,7 +109,7 @@ def test_with_initial(num_input, initial_input, operation, min_node_feature, edg
     avg_relative_error = np.mean(relative_error)
     return avg_relative_error
 
-def test_an_instance(test_path, index, threshold, alpha_list, optimizer, predictor):
+def test_an_instance(test_path, index, threshold, alpha_list, optimizer, predictor, device):
     test_path = test_path + str(index) + '.pkl'
     test_file = open(test_path, 'rb')
     test_data = pickle.load(test_file)
@@ -133,14 +119,12 @@ def test_an_instance(test_path, index, threshold, alpha_list, optimizer, predict
     min_node_feature = np.zeros(15)
     min_score = 100
     chosen_alpha = 0
-    min_soft_score = 0
     for alpha in alpha_list:
-        score_alpha, node_feature_alpha, soft_score = test_alpha_in_instance(threshold, alpha, operation, edge_index, optimizer, predictor)
+        score_alpha, node_feature_alpha = test_alpha_in_instance(threshold, alpha, operation, edge_index, optimizer, predictor, device)
         if score_alpha < min_score:
             min_score = score_alpha
             chosen_alpha = alpha
             min_node_feature = node_feature_alpha
-            min_soft_score = soft_score
     num_input = 14 + np.random.randint(0,2)*2
     initial_input = np.random.randint(1,100,(2000, num_input))/10
     linear_min_score = test_with_initial(num_input, initial_input, operation, min_node_feature, edge_index)
@@ -148,82 +132,107 @@ def test_an_instance(test_path, index, threshold, alpha_list, optimizer, predict
     back_node_feature[15-threshold:] = 1
     back_score = test_with_initial(num_input, initial_input, operation, back_node_feature, edge_index)
     front_node_feature = np.zeros(15)
-    front_random_index = np.random.randint(0,8,threshold)
+    front_random_index = np.random.randint(0,8,3)
     front_node_feature[front_random_index] = 1
-    front_score = test_with_initial(num_input, initial_input, operation, front_node_feature, edge_index)
+    front_score = test_with_initial(num_input, initial_input, operation, back_node_feature, edge_index)
     print("instance "+str(index)+"threshold: "+str(threshold) + "all back is:" + str(back_score))
     print("instance "+str(index)+"threshold: "+str(threshold) + "all front is:" + str(front_score))
     print("instance "+str(index)+"threshold: "+str(threshold) + " linear error is: " +str(linear_min_score))
     print("instance "+str(index)+"threshold: "+str(threshold) + " gt error is: " +str(score))
     print("instance "+str(index)+"threshold: "+str(threshold) + " model out rounded is: " +str(min_score))
-    print("instance "+str(index)+"threshold: "+str(threshold) + " model soft score is: " +str(min_soft_score))
     print("")
-    return linear_min_score, back_score, front_score, score, min_score, min_soft_score
+    return linear_min_score, back_score, front_score, score, min_score
 
 def main():
-    
+    parser = argparse.ArgumentParser(description='this is the arg parser for application dataset 1')
+    parser.add_argument('--save_path', dest = 'save_path',default = './test_results/test_aff/')
+    parser.add_argument('--proxy_path', dest = 'proxy_path',default = '../train_proxy/train_files/aff/train_aff_100lr0001/')
+    parser.add_argument('--model_path', dest = 'model_path',default = '../train_atheta/train_files/aff/train_a_aff_51lr0001/')
+    parser.add_argument('--testset_path', dest = 'testset_path',default = '../build_dataset/testset/')
+    parser.add_argument('--gpu', dest = 'gpu',default = '7')
+
+    args = parser.parse_args()
+
+    device = torch.device("cuda:"+str(args.gpu))
     #load the optimizer
-    optimizer = PNA_concave2()
-    optimizer_state_dict = torch.load('path ', map_location = torch.device('cpu'))
+    optimizer = PNA_aff2(args.gpu, args.model_path)
+    optimizer_state_dict = torch.load(args.model_path+str('best_test_model.pth'), map_location = torch.device('cpu'))
     optimizer.load_state_dict(optimizer_state_dict)
+    optimizer.to(device)
     optimizer.eval()
 
     #load the predictor
-    predictor = PNA_concave()
-    predictor_state_dict = torch.load('path ', map_location = torch.device('cpu'))
+    predictor = PNA_aff(args.gpu, args.proxy_path)
+    predictor_state_dict = torch.load(args.proxy_path+str('best_test_model.pth'), map_location = torch.device('cpu'))
     predictor.load_state_dict(predictor_state_dict)
+    predictor.to(device)
     predictor.eval()
-
 
     #set how many threshold to test
     threshold_list = [3, 5, 8]
 
     #set how many alpha to test
     alpha_list_1 = np.arange(0.01,1,0.05)
-    #alpha_list_1 = np.arange(2, 4, 7)
     #alpha_list_2 = np.arange(1,10,0.5)
     alpha_list = alpha_list_1
-
-    test_path = './test/testset/'
+    list_3 = []
+    list_5 = []
+    list_8 = []
+    
+    test_path = args.testset_path
     avg_linear_error = [0, 0, 0]
     avg_gt_error = [0, 0, 0]
     avg_back_error = [0, 0, 0]
     avg_front_error = [0, 0, 0]
     avg_model_rounded = [0, 0, 0]
-    avg_soft_score = [0, 0, 0]
-
-    for index in range(1,201):
+    for index in tqdm(range(1,201)):
         num_t = 0
         for threshold in threshold_list:
-            linear_error, back_error, front_error, gt_error, model_out_rounded, soft_score = test_an_instance(test_path, index, threshold, alpha_list, optimizer, predictor)
+            linear_error, back_error, front_error, gt_error, model_out_rounded = test_an_instance(test_path, index, threshold, alpha_list, optimizer, predictor, device)
+            if num_t == 0:
+                list_3.append(linear_error)
+            if num_t == 1:
+                list_5.append(linear_error)
+            if num_t == 2:
+                list_8.append(linear_error)
             avg_linear_error[num_t] = avg_linear_error[num_t] + linear_error / 200
             avg_back_error[num_t] = avg_back_error[num_t] + back_error / 200
             avg_front_error[num_t] = avg_front_error[num_t] + front_error / 200
             avg_gt_error[num_t] = avg_gt_error[num_t] + gt_error / 200
             avg_model_rounded[num_t] = avg_model_rounded[num_t] + model_out_rounded / 200
-            avg_soft_score[num_t] = avg_soft_score[num_t] + soft_score / 200
             num_t = num_t + 1
 
     print('linear threshold = '+str(threshold_list[0]) + 'avg reltive error: '+str(avg_linear_error[0]))
     print('back threshold = '+str(threshold_list[0]) + 'avg reltive error: '+str(avg_back_error[0]))
     print('front threshold = '+str(threshold_list[0]) + 'avg reltive error: '+str(avg_front_error[0]))
     print('gt threshold = '+str(threshold_list[0]) + 'avg relative error: '+str(avg_gt_error[0]))
-    print('model out rounded = '+str(threshold_list[0]) + 'avg model out rounded: '+str(avg_model_rounded[0].item()))
-    print('soft score = '+str(threshold_list[0]) + 'avg soft score: '+str(avg_soft_score[0].item()))
+    print('model out rounded = '+str(threshold_list[0]) + 'avg model rounded: '+str(avg_model_rounded[0].item()))
     
     print('linear threshold = '+str(threshold_list[1]) + 'avg reltive error: '+str(avg_linear_error[1]))
     print('back threshold = '+str(threshold_list[1]) + 'avg reltive error: '+str(avg_back_error[1]))
     print('front threshold = '+str(threshold_list[1]) + 'avg reltive error: '+str(avg_front_error[1]))
     print('gt threshold = '+str(threshold_list[1]) + 'avg relative error: '+str(avg_gt_error[1]))
-    print('model out rounded = '+str(threshold_list[1]) + 'avg model out rounded: '+str(avg_model_rounded[1].item()))
-    print('soft score = '+str(threshold_list[1]) + 'avg soft score: '+str(avg_soft_score[1].item()))
+    print('model out rounded = '+str(threshold_list[1]) + 'avg model rounded: '+str(avg_model_rounded[1].item()))
 
     print('linear threshold = '+str(threshold_list[2]) + 'avg reltive error: '+str(avg_linear_error[2]))
     print('back threshold = '+str(threshold_list[2]) + 'avg reltive error: '+str(avg_back_error[2]))
     print('front threshold = '+str(threshold_list[2]) + 'avg reltive error: '+str(avg_front_error[2]))
     print('gt threshold = '+str(threshold_list[2]) + 'avg relative error: '+str(avg_gt_error[2]))
-    print('model out rounded = '+str(threshold_list[2]) + 'avg model out rounded: '+str(avg_model_rounded[2].item()))
-    print('soft score = '+str(threshold_list[2]) + 'avg soft score: '+str(avg_soft_score[2].item()))
+    print('model out rounded = '+str(threshold_list[2]) + 'avg model rounded: '+str(avg_model_rounded[2].item()))
+
+    path_s = args.save_path
+    path_3 = path_s + '3.pkl'
+    path_5 = path_s + '5.pkl'
+    path_8 = path_s + '8.pkl'
+    f3 = open(path_3, 'wb')
+    pickle.dump(list_3,f3)
+    f3.close()
+    f5 = open(path_5, 'wb')
+    pickle.dump(list_5,f5)
+    f5.close()
+    f8 = open(path_8, 'wb')
+    pickle.dump(path_8,f8)
+    f8.close()
     
 
 if __name__ == '__main__':
