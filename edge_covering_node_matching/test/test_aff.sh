@@ -1,0 +1,1 @@
+nohup python -u test_aff.py --gpu 0 --proxy_path '../train_proxy/train_files/aff/train_aff_lr0005/best_val_model.pth' --model_path '../train_atheta/train_files/aff/train_a_aff/best_val_model.pth' --testset_path '../build_dataset/testset_cover/' --save_paint_path './paint/test_aff/' > ./test_aff_cover.log  2>&1 </dev/null &

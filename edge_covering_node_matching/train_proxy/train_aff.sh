@@ -1,0 +1,1 @@
+nohup python -u train_aff.py --save_path './train_files/aff/train_aff_lr0005' --gpu 7 > ./train_aff_lr0005.log  2>&1 </dev/null &
