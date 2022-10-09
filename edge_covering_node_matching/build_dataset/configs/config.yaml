@@ -1,6 +1,6 @@
+# Here replace the XXX with your own path! (Absolute path preferred)
 data:
-    # path to the dataset folder that you want to put the training data under the build_dataset folder
-    target_path: #absolute path recommended
+    target_path: XXX
     splits:
         train: 0.7
         valid: 0.15

@@ -1,0 +1,1 @@
+nohup python -u generate_test.py --save_path './new_covering_testset/' > ./generate_test.log  2>&1 </dev/null &

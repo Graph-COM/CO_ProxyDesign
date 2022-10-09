@@ -1,18 +1,12 @@
-import matplotlib as mpl
-mpl.use('Agg')
 import numpy as np
-import matplotlib.pyplot as plt
 import math
-
-import pandas as pd
 import numpy as np
 import torch
 from torch_geometric.data import InMemoryDataset
 from torch_geometric.data import Data
 from pathlib import Path
 import yaml
-import re
-import random
+
 
 # the ground_truth function f()
 def f(z1, z2, x):
@@ -25,7 +19,7 @@ def f(z1, z2, x):
     #ans = g1 * x + g2
     return ans
 
-# generate a bernoulli 0 or 1 with the given probability
+
 # the dataset class to generate the dataset
 class Synthetic_Mnist_Dataset(InMemoryDataset):
     def __init__(self, config:dict):
@@ -47,7 +41,7 @@ class Synthetic_Mnist_Dataset(InMemoryDataset):
         # Download to `self.raw_dir`.
         pass
 
-    def get_idx_split(self, split_type = 'Random'):
+    def get_idx_split(self, split_type = None):
         data_idx = np.arange(100000)
         splits = self.splits
         train_num = int(float(splits['train'])*100000)
@@ -70,7 +64,7 @@ class Synthetic_Mnist_Dataset(InMemoryDataset):
         data_list = []
         max_y = 0
         # get the data of mnist
-        mnist_list = torch.load('../mnist/processed/training.pt')
+        mnist_list = torch.load('./raw_mnist/mnist_tensor.pt')
 
         for i in range(100000):
 
