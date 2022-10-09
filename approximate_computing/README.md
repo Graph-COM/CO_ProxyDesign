@@ -1,4 +1,5 @@
-# Here are the steps to train the model, test the model in the imprecise functional unit assignment in approximation computing.
+# approximate_computing
+Here are the steps to train the model, test the model in the imprecise functional unit assignment in approximation computing.
 
 ## Problem Settings
 In this problem, we take the computation graph with $15 = (8+4+2+1)$ nodes, each nodes represents an operation (either addition or multiplication). Each operation has two versions of calculators: the precise calculator or the approximate computing (AC) calculator. The former outputs accurate output, while the latter gives a $10\%$ relative error. To balance the computational complexity and efficiency, in real-world applications, there are always a threshold to set at least several ($3,5,8$ in our case) calculators to be AC (efficient but not accurate). The goal is to learn GNNs to assign the calculators whether to be precise or AC ($X$) such that the final relative error of the circuit could be as small as possible.
